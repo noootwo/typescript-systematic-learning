@@ -19,6 +19,16 @@ tsc编译器
 
 `hello typescript!`
 
+生成tsconfig.json文件，用于控制typescript的检测的状态。
+
+```
+// 命令
+tsc --init
+
+// 生成有中文注释的文件
+tsc --init --locale zh-cn
+```
+
 # 数据类型
 ### 类型注释
 
