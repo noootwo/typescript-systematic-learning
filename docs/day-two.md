@@ -227,8 +227,145 @@ function logValue(x: Date | string) {
 
 要定义一个用户定义的类型保护，我们只需要定义一个返回类型为类型谓词的函数:
 
+```
 function isFish(pet: Fish | Bird): pet is Fish {
   return (pet as Fish).swim !== undefined;
 }
+```
 
+任何时候 isFish 都是通过某个变量调用的，如果原始类型兼容，那么 TypeScript 会将该变量缩小到特定的类型。
+
+```
+// Both calls to 'swim' and 'fly' are now okay.
+let pet = getSmallPet();
+ 
+if (isFish(pet)) {
+  pet.swim();
+} else {
+  pet.fly();
+}
+```
+
+## 复杂的结构中
+
+想象一下我们正在尝试编码像圆圈和方块这样的形状。圆圈记录它们的半径，方块记录它们的边长。我们将使用一个叫 kind 的字段来判断我们处理的是哪种形状。这是第一次尝试定义形状。
+
+```
+interface Shape {
+  kind: "circle" | "square";
+  radius?: number;
+  sideLength?: number;
+}
+```
+
+我们使用字符串类型的联合: “圆”和“正方形”来告诉我们应该分别将形状视为圆还是正方形。通过使用“ circle”| “ square”代替字符串，我们可以避免拼写错误。
+
+```
+function handleShape(shape: Shape) {
+  // oops!
+  if (shape.kind === "rect") {
+    // This condition will always return 'false' since the types '"circle" | "square"' and '"rect"' have no overlap.
+    // ...
+  }
+}
+```
+
+使用非空断言(a！在 shape.radius 之后)来说桡骨确实存在。
+
+```
+function getArea(shape: Shape) {
+  if (shape.kind === "circle") {
+    return Math.PI * shape.radius! ** 2;
+  }
+}
+```
+
+这种 Shape 编码的问题在于，类型检查器无法根据种类属性知道是否存在半径或旁长。我们需要把我们所知道的告诉类型检查员。不够优雅，考虑到这一点，让我们再次定义 Shape。
+
+```
+interface Circle {
+  kind: "circle";
+  radius: number;
+}
+ 
+interface Square {
+  kind: "square";
+  sideLength: number;
+}
+ 
+type Shape = Circle | Square;
+```
+
+我们再次检查类属性:
+
+```
+function getArea(shape: Shape) {
+  if (shape.kind === "circle") {
+    return Math.PI * shape.radius ** 2;
+                      
+    // (parameter) shape: Circle
+  }
+}
+```
+
+同样的检查也适用于 switch 语句。现在我们可以试着写一个完整的旅游目的地，而不需要任何烦人的东西！非空断言。
+
+```
+function getArea(shape: Shape) {
+  switch (shape.kind) {
+    case "circle":
+      return Math.PI * shape.radius ** 2;
+                        
+      // (parameter) shape: Circle
+    case "square":
+      return shape.sideLength ** 2;
+              
+      // (parameter) shape: Square
+  }
+}
+```
+
+## never类型
+
+例如，在 getArea 函数中添加一个缺省值，该函数尝试将形状分配给 never，当所有可能的情况都没有处理时，将会引发。
+
+```
+type Shape = Circle | Square;
+ 
+function getArea(shape: Shape) {
+  switch (shape.kind) {
+    case "circle":
+      return Math.PI * shape.radius ** 2;
+    case "square":
+      return shape.sideLength ** 2;
+    default:
+      const _exhaustiveCheck: never = shape;
+      return _exhaustiveCheck;
+  }
+}
+```
+
+向 Shape 联合类型添加一个新成员，将导致打字稿错误:
+
+```
+interface Triangle {
+  kind: "triangle";
+  sideLength: number;
+}
+ 
+type Shape = Circle | Square | Triangle;
+ 
+function getArea(shape: Shape) {
+  switch (shape.kind) {
+    case "circle":
+      return Math.PI * shape.radius ** 2;
+    case "square":
+      return shape.sideLength ** 2;
+    default:
+      const _exhaustiveCheck: never = shape;
+      // Type 'Triangle' is not assignable to type 'never'.
+      return _exhaustiveCheck;
+  }
+}
+```
 
