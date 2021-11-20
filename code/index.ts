@@ -102,3 +102,6 @@
 //   // @ts-expect-error
 //   return true;
 // };
+
+type a = never[];
+let b: a = [];
