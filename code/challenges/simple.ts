@@ -17,3 +17,7 @@ const todo: TodoPreview = {
 type MyPick<T, K extends keyof T> = {
   [k in K]: T[k];
 };
+
+type Awaited<R extends Promise<any>> = R extends Promise<infer T> ? T : R;
+
+const a: Awaited<Promise<string>>;
