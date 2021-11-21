@@ -103,5 +103,5 @@
 //   return true;
 // };
 
-type a = never[];
-let b: a = [];
+// type a = never[];
+// let b: a = [];
