@@ -56,38 +56,229 @@ type Sample2 = AnyOf<[0, "", false, [], {}]>; // expected to be false.
 // 不使用 ReturnType 实现 TypeScript 的 ReturnType<T> 范型。
 
 const fn = (v: boolean) => {
-  if (v)
-    return 1
-  else
-    return 2
-}
+  if (v) return 1;
+  else return 2;
+};
 
-type a4 = MyReturnType<typeof fn> // 应推导出 "1 | 2"
+type a4 = MyReturnType<typeof fn>; // 应推导出 "1 | 2"
 
-type MyReturnType<T extends (...args: any[]) => any> = T extends (...args: any[]) => infer R ? R : never
+type MyReturnType<T extends (...args: any[]) => any> = T extends (
+  ...args: any[]
+) => infer R
+  ? R
+  : never;
 
 // 实现一个通用的DeepReadonly<T>，它将对象的每个参数及其子对象递归地设为只读。
 
 // 您可以假设在此挑战中我们仅处理对象。数组，函数，类等都无需考虑。但是，您仍然可以通过覆盖尽可能多的不同案例来挑战自己。
 
-type X = { 
-  x: { 
-    a: 1
-    b: 'hi'
-  }
-  y: 'hey'
+type X = {
+  x: {
+    a: 1;
+    b: "hi";
+  };
+  y: "hey";
+};
+
+type Expected = {
+  readonly x: {
+    readonly a: 1;
+    readonly b: "hi";
+  };
+  readonly y: "hey";
+};
+
+type DeepReadonly<T extends { [key: string]: any }> = {
+  readonly [K in keyof T]: T[K] extends { [key: string]: any }
+    ? DeepReadonly<T[K]>
+    : T[K];
+};
+
+let todo: DeepReadonly<X>; // should be same as `Expected`
+
+// 实现泛型TupleToUnion<T>，它覆盖元组的值与其值联合。
+
+type Arr = ["1", "2", "3"];
+
+const a: TupleToUnion<Arr>; // expected to be '1' | '2' | '3'
+
+type TupleToUnion<T extends any[]> = T[number];
+
+// 在 JavaScript 中我们很常会使用可串联（Chainable/Pipeline）的函数构造一个对象，但在 TypeScript 中，你能合理的给他附上类型吗？
+
+// 在这个挑战中，你可以使用任意你喜欢的方式实现这个类型 - Interface, Type 或 Class 都行。你需要提供两个函数 option(key, value) 和 get()。在 option 中你需要使用提供的 key 和 value 扩展当前的对象类型，通过 get 获取最终结果。
+
+// 你只需要在类型层面实现这个功能 - 不需要实现任何 TS/JS 的实际逻辑。
+
+// 你可以假设 key 只接受字符串而 value 接受任何类型，你只需要暴露它传递的类型而不需要进行任何处理。同样的 key 只会被使用一次。
+
+type Chainable<T = {}> = {
+  option<K extends string, V extends any>(
+    key: K,
+    value: V
+  ): Chainable<T & { [key in K]: V }>;
+  get(): T;
+};
+
+declare const config: Chainable;
+
+const result = config
+  .option("foo", 123)
+  .option("name", "type-challenges")
+  .option("bar", { value: "Hello World" })
+  .get();
+
+// 期望 result 的类型是：
+interface Result2 {
+  foo: number;
+  name: string;
+  bar: {
+    value: string;
+  };
 }
 
-type Expected = { 
-  readonly x: { 
-    readonly a: 1
-    readonly b: 'hi'
-  }
-  readonly y: 'hey' 
+// 实现一个通用Last<T>，它接受一个数组T并返回其最后一个元素的类型。
+
+type arr1 = ["a", "b", "c"];
+type arr2 = [3, 2, 1];
+
+type tail1 = Last<arr1>; // expected to be 'c'
+type tail2 = Last<arr2>; // expected to be 1
+
+type Last<T extends any[]> = T extends [...infer T, infer K] ? K : never;
+
+// 实现一个通用Pop<T>，它接受一个数组T并返回一个没有最后一个元素的数组。
+
+type arr3 = ["a", "b", "c", "d"];
+type arr4 = [3, 2, 1];
+
+type re1 = Pop<arr3>; // expected to be ['a', 'b', 'c']
+type re2 = Pop<arr4>; // expected to be [3, 2]
+
+type Pop<T extends any[]> = T extends [...infer T, infer K] ? T : never;
+
+// 额外：同样，您也可以实现Shift，Push和Unshift吗？
+// Push 和 Unshift 见 simple.ts
+
+type re3 = Shift<arr3>; // expected to be ['b', 'c', 'd']
+type re4 = Shift<arr4>; // expected to be [2, 1]
+
+type Shift<T extends any[]> = T extends [infer K, ...infer T] ? T : never;
+
+// 键入函数PromiseAll，它接受PromiseLike对象数组，返回值应为Promise<T>，其中T是解析的结果数组。
+
+const promise1 = Promise.resolve(3);
+const promise2 = 42;
+const promise3 = new Promise<string>((resolve, reject) => {
+  setTimeout(resolve, 100, "foo");
+});
+
+// expected to be `Promise<[number, number, string]>`
+const p = Promise.all([promise1, promise2, promise3] as const);
+const p1 = PromiseAll([promise1, promise2, promise3] as const);
+
+declare function PromiseAll<T extends any[]>(
+  value: readonly [...T]
+): Promise<{ [K in keyof T]: T[K] extends Promise<infer R> ? R : T[K] }>;
+
+// 有时，您可能希望根据其属性在并集中查找类型。
+
+// 在此挑战中，我们想通过在联合Cat | Dog中搜索公共type字段来获取相应的类型。换句话说，在以下示例中，我们期望LookUp<Dog | Cat, 'dog'>获得Dog，LookUp<Dog | Cat, 'cat'>获得Cat。
+
+interface Cat {
+  type: "cat";
+  breeds: "Abyssinian" | "Shorthair" | "Curl" | "Bengal";
 }
 
-type DeepReadonly<T extends {[key: string]:any}> = {
-  readonly [K in keyof T]: T[K] extends {[key: string]:any} ? DeepReadonly<T[K]> : T[K]
+interface Dog {
+  type: "dog";
+  breeds: "Hound" | "Brittany" | "Bulldog" | "Boxer";
+  color: "brown" | "white" | "black";
 }
 
-let todo: DeepReadonly<X> // should be same as `Expected`
+type MyDog = LookUp<Cat | Dog, "dog">; // expected to be `Dog`
+type MyCat = LookUp<Cat | Dog, "Curl">; // expected to be `Cat`
+
+type LookUp<T, U> = {
+  [K in keyof T]: U extends T[K] ? T : never;
+}[keyof T];
+
+// 实现 TrimLeft<T> ，它接收确定的字符串类型并返回一个新的字符串，其中新返回的字符串删除了原字符串开头的空白字符串。
+
+type trimed = TrimLeft<"  Hello World  ">; // 应推导出 'Hello World  '
+
+type TrimLeft<T extends string> = T extends `${" " | "\n" | "\t"}${infer T}`
+  ? TrimLeft<T>
+  : T;
+
+// 实现 Trim<T>，它采用一个精确的字符串类型，并返回一个新的字符串，从两端删除空白。
+
+type trimed1 = Trim<"  Hello World  ">; // expected to be 'Hello World'
+
+type Trim<T extends string> = T extends
+  | `${" " | "\n" | "\t"}${infer T}`
+  | `${infer T}${" " | "\n" | "\t"}`
+  ? Trim<T>
+  : T;
+
+// 实现Capitalize<t>，它将字符串的第一个字母转换为大写，其余字母保持原样。
+
+type UpperChar<S extends string> = S extends "a"
+  ? "A"
+  : S extends "b"
+  ? "B"
+  : S extends "c"
+  ? "C"
+  : S extends "d"
+  ? "D"
+  : S extends "e"
+  ? "E"
+  : S extends "f"
+  ? "F"
+  : S extends "g"
+  ? "G"
+  : S extends "h"
+  ? "H"
+  : S extends "i"
+  ? "I"
+  : S extends "j"
+  ? "J"
+  : S extends "k"
+  ? "K"
+  : S extends "l"
+  ? "L"
+  : S extends "m"
+  ? "M"
+  : S extends "n"
+  ? "N"
+  : S extends "o"
+  ? "O"
+  : S extends "p"
+  ? "P"
+  : S extends "q"
+  ? "Q"
+  : S extends "r"
+  ? "R"
+  : S extends "s"
+  ? "S"
+  : S extends "t"
+  ? "T"
+  : S extends "u"
+  ? "U"
+  : S extends "v"
+  ? "V"
+  : S extends "w"
+  ? "W"
+  : S extends "x"
+  ? "X"
+  : S extends "y"
+  ? "Y"
+  : S extends "z"
+  ? "Z"
+  : S;
+
+type capitalized = MyCapitalize<"hello world">; // expected to be 'Hello world'
+
+type MyCapitalize<T extends string> = T extends `${infer H}${infer T}`
+  ? `${UpperChar<H>}${T}`
+  : UpperChar<T>;
