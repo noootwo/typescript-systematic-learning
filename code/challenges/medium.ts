@@ -282,3 +282,53 @@ type capitalized = MyCapitalize<"hello world">; // expected to be 'Hello world'
 type MyCapitalize<T extends string> = T extends `${infer H}${infer T}`
   ? `${UpperChar<H>}${T}`
   : UpperChar<T>;
+
+// 实现 Replace < s，From，To > ，在给定的字符串 s 中用 To 替换字符串 From
+
+type replaced1 = Replace<"types are fun!", "fun", "awesome">; // expected to be 'types are awesome!'
+type replaced2 = Replace<"types are fun!", "types", "type">; // expected to be 'type are fun!'
+type replaced3 = Replace<"", "types", "type">; // expected to be ''
+
+type Replace<
+  T extends string,
+  O extends string,
+  N extends string
+> = T extends `${infer L}${O}${infer R}` ? `${L}${N}${R}` : T;
+
+// 实现 ReplaceAll < s，From，To > ，它用 To 替换给定字符串 s 中的所有子字符串 From
+
+type replaced = ReplaceAll<"t y p e s", " ", "">; // expected to be 'types'
+
+type ReplaceAll<
+  T extends string,
+  O extends string,
+  N extends string
+> = T extends `${infer L}${O}${infer R}` ? ReplaceAll<`${L}${N}${R}`, O, N> : T;
+
+// 实现一个范型 AppendArgument<Fn, A>，对于给定的函数类型 Fn，以及一个任意类型 A，返回一个新的函数 G。G 拥有 Fn 的所有参数并在末尾追加类型为 A 的参数。
+
+type Fn = (a: number, b: string) => number;
+
+type Result3 = AppendArgument<Fn, boolean>;
+// 期望是 (a: number, b: string, x: boolean) => number
+
+// with built-in type
+type AppendArgument1<Fn extends (...args: any) => any, Type> = (
+  ...args: [...Parameters<Fn>, Type]
+) => ReturnType<Fn>;
+
+type AppendArgument<F extends Function, A> = F extends (
+  ...arg: infer U
+) => infer R
+  ? (...arg: [...U, A]) => R
+  : F;
+
+// 实现将联合类型转换为包含联合排列的数组的排列类型。
+
+type perm = Permutation<"A" | "B" | "C">; // ['A', 'B', 'C'] | ['A', 'C', 'B'] | ['B', 'A', 'C'] | ['B', 'C', 'A'] | ['C', 'A', 'B'] | ['C', 'B', 'A']
+
+type Permutation<T, U = T> = [U] extends [never]
+  ? []
+  : T extends never
+  ? []
+  : [T, ...Permutation<Exclude<U, T>>];
