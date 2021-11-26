@@ -332,3 +332,12 @@ type Permutation<T, U = T> = [U] extends [never]
   : T extends never
   ? []
   : [T, ...Permutation<Exclude<U, T>>];
+
+// 计算字符串文本的长度，它的行为类似于 String # length。
+type Split<S extends string> = S extends `${infer A}${infer B}`
+  ? [A, ...Split<B>]
+  : [];
+
+type LengthOfString<S extends string> = Split<S>["length"];
+
+const len: LengthOfString<"123456"> = 6;
