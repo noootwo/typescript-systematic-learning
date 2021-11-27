@@ -363,3 +363,54 @@ type Result1 = AppendToObject<{ id: "1" }, "value", 4>; // expected to be { id: 
 type AppendToObject<T extends object, U extends string, V> = {
   [key in keyof T | U]: key extends keyof T ? T[key] : V;
 };
+
+// 实现 String to Union 类型。键入 take String 参数。输出应该是输入字母的联合
+
+type Result4 = StringToUnion<"123">; // expected to be "1" | "2" | "3"
+type Result5 = StringToUnion1<"123">; // expected to be "1" | "2" | "3"
+
+type StringToUnion<T extends string> = Split<T>[number];
+type StringToUnion1<T extends string> = T extends `${infer A}${infer B}`
+  ? A | StringToUnion<B>
+  : never;
+
+// 将两种类型合并为一种新类型。第二种类型的键重写第一种类型的键。
+
+type Merge<T extends object, U extends object> = {
+  [K in keyof T | keyof U]: K extends keyof U
+    ? U[K]
+    : K extends keyof T
+    ? T[K]
+    : never;
+};
+
+type c = Merge<{ a: 1 }, { a: 2; b: 3 }>; //expected { a: 2, b: 3 }
+
+// for-bar-baz -> forBarBaz 驼峰命名
+
+type Result6 = CamelCase<"for-bar-baz">;
+
+type CamelCase<T extends string> = T extends `${infer L}-${infer R}`
+  ? `${L}${CamelCase<MyCapitalize<R>>}`
+  : T;
+
+// FooBarBaz -> for-bar-baz 肉串命名
+
+type Result7 = KebabCase<Result6>;
+type Result8 = KebabCase<"Result6">;
+type Result9 = KebabCase1<"Vue3TypeScript">;
+
+type KebabCase1<T extends string> = T extends `${infer L}${infer R}`
+  ? Lowercase<L> extends L
+    ? `${L}${KebabCase<R>}`
+    : `${L extends T[0] ? "" : "-"}${Lowercase<L>}${KebabCase<R>}`
+  : T;
+
+type KebabCase<
+  S extends string,
+  P extends string = ""
+> = S extends `${infer C}${infer R}`
+  ? C extends Lowercase<C>
+    ? `${C}${KebabCase<R, "-">}`
+    : `${P}${Lowercase<C>}${KebabCase<R, "-">}`
+  : S;
