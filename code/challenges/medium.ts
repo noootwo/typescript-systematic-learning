@@ -341,3 +341,25 @@ type Split<S extends string> = S extends `${infer A}${infer B}`
 type LengthOfString<S extends string> = Split<S>["length"];
 
 const len: LengthOfString<"123456"> = 6;
+
+// 在这个挑战中，您需要编写一个接受数组并发出扁平数组类型的类型。
+
+type flatten = Flatten<[1, 2, [3, 4], [[[5]]]]>; // [1, 2, 3, 4, 5]
+
+type Flatten<T extends any[]> = T extends [infer L, ...infer R]
+  ? L extends Array<any>
+    ? [...Flatten<L>, ...Flatten<R>]
+    : [L, ...Flatten<R>]
+  : T;
+
+type Flatten1<T extends any[]> = T extends [infer First, ...infer Rest]
+  ? [...(First extends any[] ? Flatten<First> : [First]), ...Flatten<Rest>]
+  : [];
+
+// 实现向接口添加新字段的类型。类型接受三个参数。输出应该是带有新字段的对象
+
+type Result1 = AppendToObject<{ id: "1" }, "value", 4>; // expected to be { id: '1', value: 4 }
+
+type AppendToObject<T extends object, U extends string, V> = {
+  [key in keyof T | U]: key extends keyof T ? T[key] : V;
+};
