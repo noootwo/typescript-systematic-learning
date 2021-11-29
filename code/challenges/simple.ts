@@ -22,7 +22,7 @@ type MyPick<T, K extends keyof T> = {
 
 type Awaited<R extends Promise<any>> = R extends Promise<infer T> ? T : R;
 
-const a: Awaited<Promise<string>>;
+type a = Awaited<Promise<string>>; // expected string
 
 // 不要使用内置的Readonly<T>，自己实现一个。
 

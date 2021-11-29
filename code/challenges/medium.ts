@@ -414,3 +414,40 @@ type KebabCase<
     ? `${C}${KebabCase<R, "-">}`
     : `${P}${Lowercase<C>}${KebabCase<R, "-">}`
   : S;
+
+type o1 = { a: 1; b: 2 };
+type o2 = { c: 2; b: 3 };
+
+type Result10 = Diff<o1, o2>; // expected {a: 1, c: 2}
+
+type Diff<T extends Object, U extends Object> = {
+  [K in
+    | Exclude<keyof T, keyof U>
+    | Exclude<keyof U, keyof T>]: K extends keyof T
+    ? T[K]
+    : K extends keyof U
+    ? U[K]
+    : never;
+};
+
+// 实现一个类型 IsNever，它接受输入类型 t。如果解析类型为 never，则返回 true，否则返回 false。
+
+type A1 = IsNever<never>; // expected to be true
+type B = IsNever<undefined>; // expected to be false
+type C = IsNever<null>; // expected to be false
+type D = IsNever<[]>; // expected to be false
+type E = IsNever<number>; // expected to be false
+
+type IsNever<T> = [T] extends [never] ? true : false;
+
+// 实现一个类型 IsUnion，该类型接受输入类型 t，并返回 t 是否解析为联合类型。
+
+type case1 = IsUnion<string>; // false
+type case2 = IsUnion<string | number>; // true
+type case3 = IsUnion<[string | number]>; // false
+
+type IsUnion<T, F = T> = T extends T
+  ? Array<F> extends Array<T>
+    ? false
+    : true
+  : never;
