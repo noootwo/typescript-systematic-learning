@@ -481,3 +481,7 @@ type ReplacedNodes = ReplaceKeys<
 >; // {type: 'A', name: number, flag: string} | {type: 'B', id: number, flag: string} | {type: 'C', name: number, flag: string} // would replace name from string to number, replace flag from number to string.
 
 type ReplacedNotExistKeys = ReplaceKeys<Nodes, "name", { aa: number }>; // {type: 'A', name: never, flag: number} | NodeB | {type: 'C', name: never, flag: number} // would replace name to never
+
+type ReplaceKeys<U extends object, T extends keyof any, Y extends object> = {
+  [P in keyof U]: P extends T ? (P extends keyof Y ? Y[P] : never) : U[P];
+};
