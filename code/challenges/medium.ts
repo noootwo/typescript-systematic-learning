@@ -485,3 +485,20 @@ type ReplacedNotExistKeys = ReplaceKeys<Nodes, "name", { aa: number }>; // {type
 type ReplaceKeys<U extends object, T extends keyof any, Y extends object> = {
   [P in keyof U]: P extends T ? (P extends keyof Y ? Y[P] : never) : U[P];
 };
+
+// 实现 RemoveIndexSignature < t > ，从对象类型中排除索引签名。
+
+type Foo = {
+  [key: string]: any;
+  foo(): void;
+};
+
+type A2 = RemoveIndexSignature<Foo>; // expected { foo(): void }
+
+type RemoveIndexSignature<T extends Object> = {
+  [K in keyof T as number extends K
+    ? never
+    : string extends K
+    ? never
+    : K]: T[K];
+};
