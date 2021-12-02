@@ -502,3 +502,47 @@ type RemoveIndexSignature<T extends Object> = {
     ? never
     : K]: T[K];
 };
+
+// 实现 PercentageParser。根据/^ (+ | -) ? (d *) ? (%) ? $/规则性来匹配 t 并获得三个匹配。
+
+// 结构应该是: [ + 或减，数字，单位]如果没有捕获，默认是一个空字符串。
+
+type PString1 = "";
+type PString2 = "+85%";
+type PString3 = "-85%";
+type PString4 = "85%";
+type PString5 = "85";
+
+type R1 = PercentageParser<PString1>; // expected ['', '', '']
+type R2 = PercentageParser<PString2>; // expected ["+", "85", "%"]
+type R3 = PercentageParser<PString3>; // expected ["-", "85", "%"]
+type R4 = PercentageParser<PString4>; // expected ["", "85", "%"]
+type R5 = PercentageParser<PString5>; // expected ["", "85", ""]
+
+type GetHead<S> = S extends `${infer H & ("+" | "-")}${infer _}` ? H : "";
+
+type GetTail<S> = S extends `${infer _}%` ? "%" : "";
+
+type PercentageParser<S extends string> =
+  S extends `${GetHead<S>}${infer C}${GetTail<S>}`
+    ? [GetHead<S>, C, GetTail<S>]
+    : never;
+
+// 从字符串中删除指定的字符。
+
+type Butterfly1 = DropChar1<" b u t t e r f l y", " ">; // 'butterfly' 字符串过长会报错
+type Butterfly = DropChar<" b u t t e r f l y ! 1 2 3 4 5 6 7 8 9 7 8 9", " ">; // 'butterfly!' 较好的实现
+
+type DropChar1<
+  S extends string,
+  D extends string
+> = S extends `${infer H}${infer T}`
+  ? H extends D
+    ? DropChar1<T, D>
+    : `${H}${DropChar1<T, D>}`
+  : S;
+
+type DropChar<
+  S extends string,
+  D extends string
+> = S extends `${infer H}${D}${infer T}` ? `${H}${DropChar<T, D>}` : S;
