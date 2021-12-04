@@ -546,3 +546,50 @@ type DropChar<
   S extends string,
   D extends string
 > = S extends `${infer H}${D}${infer T}` ? `${H}${DropChar<T, D>}` : S;
+
+// 给定一个数字(总是正数)作为类型。你的类型应该返回减少一个的数字。
+
+type Zero = MinusOne<1>; // 0
+type FiftyFour = MinusOne<55>; // 54
+
+type BaseDigits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+type BaseDigitsStringUnion = `${BaseDigits[number]}`;
+
+type TupleGeneratorHepler<
+  T extends BaseDigitsStringUnion,
+  U extends any[] = []
+> = BaseDigits[T] extends U["length"]
+  ? U
+  : TupleGeneratorHepler<T, [...U, any]>;
+
+type ExpandTupleBy10x<T extends any[]> = [
+  ...T,
+  ...T,
+  ...T,
+  ...T,
+  ...T,
+  ...T,
+  ...T,
+  ...T,
+  ...T,
+  ...T
+];
+
+type TupleGenerator<
+  T extends string,
+  U extends any[] = []
+> = T extends `${infer FirstDigit}${infer Rest}`
+  ? FirstDigit extends BaseDigitsStringUnion
+    ? TupleGenerator<
+        Rest,
+        [...ExpandTupleBy10x<U>, ...TupleGeneratorHepler<FirstDigit>]
+      >
+    : U
+  : U;
+
+type MinusOne<T extends number> = TupleGenerator<`${T}`> extends [
+  _: any,
+  ...rest: infer Rest
+]
+  ? Rest["length"]
+  : 0;
