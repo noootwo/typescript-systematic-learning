@@ -593,3 +593,78 @@ type MinusOne<T extends number> = TupleGenerator<`${T}`> extends [
 ]
   ? Rest["length"]
   : 0;
+
+// 从 t 中选择一组属性，它们的类型可以分配给 u。
+
+type OnlyBoolean = PickByType<
+  {
+    name: string;
+    count: number;
+    isReadonly: boolean;
+    isEnable: boolean;
+  },
+  boolean
+>; // { isReadonly: boolean; isEnable: boolean; }
+
+type PickByType<T extends object, U> = {
+  [K in keyof T as T[K] extends U ? K : never]: T[K];
+};
+
+// 实现 StartsWith < t，u > ，它需要两个精确的字符串类型，并返回 t 是否以 u 开头
+
+type a1 = StartsWith<"abc", "ac">; // expected to be false
+type b1 = StartsWith<"abc", "ab">; // expected to be true
+type c1 = StartsWith<"abc", "abcd">; // expected to be false
+
+type StartsWith<T extends string, U extends string> = T extends `${U}${infer R}`
+  ? true
+  : false;
+
+type a2 = EndsWith<"abc", "ac">; // expected to be false
+type b2 = EndsWith<"abc", "bc">; // expected to be true
+type c2 = EndsWith<"abc", "abcd">; // expected to be false
+
+type EndsWith<T extends string, U extends string> = T extends `${infer L}${U}`
+  ? true
+  : false;
+
+// 实现一个带有两个类型参数 t 和 k 的泛型 PartialByKeys < t，k > 。
+
+// K 指定 t 的属性集，这些属性应该设置为可选的。当不提供 k 时，它应该使所有属性都是可选的，就像正常的 Partial < t > 一样。
+interface User {
+  name: string;
+  age: number;
+  address: string;
+}
+
+type UserPartialName = PartialByKeys<User, "name">; // { name?:string; age:number; address:string }
+
+type PartialByKeys<T, U> = Copy<
+  {
+    [K in keyof T]?: T[K];
+  } & {
+    [K in Exclude<keyof T, U>]: T[K];
+  }
+>;
+
+type Copy<T> = { [K in keyof T]: T[K] };
+
+type PartialByKeys1<T extends object, U extends keyof T> = Copy<
+  MyOmit<T, U> & {
+    [K in keyof T & U]?: T[K];
+  }
+>;
+
+// 实现一个通用 RequiredByKeys < t，k > ，它接受两个类型参数 t 和 k。
+
+// K 指定 t 的属性集，这些属性应该设置为必需的。当没有提供 k 时，它应该使所有属性都像普通的 Required < t > 一样被要求。
+
+type UserPartialName1 = RequiredByKeys<User, "name">; // { name: string; age?: number; address?: string }
+
+type RequiredByKeys<T extends object, U extends keyof T> = Copy<
+  {
+    [K in Exclude<keyof T, U>]?: T[K];
+  } & {
+    [K in keyof T & U]: T[K];
+  }
+>;
