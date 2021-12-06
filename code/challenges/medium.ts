@@ -668,3 +668,49 @@ type RequiredByKeys<T extends object, U extends keyof T> = Copy<
     [K in keyof T & U]: T[K];
   }
 >;
+
+// 实现通用的可变性 < t > ，它使 t 中的所有属性都可变(而不是只读)。
+interface Todo4 {
+  readonly title: string;
+  readonly description: string;
+  readonly completed: boolean;
+}
+
+type MutableTodo = Mutable<Todo>; // { title: string; description: string; completed: boolean; }
+
+type Mutable<T> = {
+  -readonly [K in keyof T]: T[K];
+};
+
+// 从 t 中选择一组类型不能分配给 u 的属性。
+
+type OmitBoolean = OmitByType<
+  {
+    name: string;
+    count: number;
+    isReadonly: boolean;
+    isEnable: boolean;
+  },
+  boolean
+>; // { name: string; count: number }
+
+type OmitByType<T extends object, U extends T[keyof T]> = {
+  [K in keyof T as T[K] extends U ? never : K]: T[K];
+};
+
+// 实现 Object.entries 的类型版本
+interface Model {
+  name: string;
+  age: number;
+  locations: string[] | null;
+}
+
+type modelEntries = ObjectEntries1<Model>; // ['name', string] | ['age', number] | ['locations', string[] | null];
+
+type ObjectEntries<T extends object> = {
+  [K in keyof T]: [K, T[K]];
+}[keyof T];
+
+type ObjectEntries1<T, U extends keyof T = keyof T> = U extends infer Prop
+  ? [Prop, T[U]]
+  : never;
