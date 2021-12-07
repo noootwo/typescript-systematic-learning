@@ -714,3 +714,42 @@ type ObjectEntries<T extends object> = {
 type ObjectEntries1<T, U extends keyof T = keyof T> = U extends infer Prop
   ? [Prop, T[U]]
   : never;
+
+// 给定一个只包含字符串类型的 tuple 类型 t 和一个类型 u，递归地构建一个对象。
+
+type a5 = TupleToNestedObject<["a"], string>; // {a: string}
+type b5 = TupleToNestedObject<["a", "b"], number>; // {a: {b: number}}
+type c5 = TupleToNestedObject<[], boolean>; // boolean. if the tuple is empty, just return the U type
+
+type TupleToNestedObject<T extends string[], U> = T extends [
+  infer L,
+  ...infer R
+]
+  ? {
+      [key in L extends string ? L : never]: R extends string[]
+        ? TupleToNestedObject<R, U>
+        : U;
+    }
+  : U;
+
+// 在这个问题中，类型应该将给定的字符串元组转换为行为类似枚举的对象。此外，一个枚举的性质最好是帕斯卡情形。
+
+type e = Enum<["macOS", "Windows", "Linux"]>;
+// -> { readonly MacOS: "macOS", readonly Windows: "Windows", readonly Linux: "Linux" }
+
+// 如果在第二个参数中给出了 true，那么该值应该是一个数字字面值。
+
+type e1 = Enum<["macOS", "Windows", "Linux"], true>;
+// -> { readonly MacOS: 0, readonly Windows: 1, readonly Linux: 2 }
+
+type IndexOf<
+  T extends string[],
+  K extends T[number],
+  R extends string[] = []
+> = T[R["length"]] extends K ? R["length"] : IndexOf<T, K, [K, ...R]>;
+
+type Enum<T extends string[], U extends boolean = false> = {
+  readonly [K in T[number] as Capitalize<K>]: U extends true
+    ? IndexOf<T, K>
+    : K;
+};
