@@ -44,3 +44,20 @@ interface Options<D, C extends A, M> {
 }
 
 declare function SimpleVue<D, C extends A, M>(options: Options<D, C, M>): any;
+
+// 实现一个类型 uniontuple，它将联合转换为元组。
+
+// 正如我们所知，联合是一个无序的结构，但是元组是一个有序的结构，这意味着我们不应该预先假设任何秩序将被保留在一个联合条款之间，当联合被创建或转换。
+
+// 因此，在这个挑战中，输出元组中元素的任何排列都是可以接受的。
+
+// 您的类型应该解析为以下两种类型之一，但不是它们的联合！
+
+type tup = UnionToTuple<1>; // [1], and correct
+type tup1 = UnionToTuple<"any" | "a">; // ['any','a'], and correct
+
+type UnionToTuple<T, R extends any[] = [], U = T> = [T] extends [never]
+  ? R
+  : T extends T
+  ? UnionToTuple<Exclude<U, T>, [...R, T]>
+  : [];
