@@ -732,24 +732,18 @@ type TupleToNestedObject<T extends string[], U> = T extends [
     }
   : U;
 
-// 在这个问题中，类型应该将给定的字符串元组转换为行为类似枚举的对象。此外，一个枚举的性质最好是帕斯卡情形。
+// 实现类型版本的 Array.reverse
 
-type e = Enum<["macOS", "Windows", "Linux"]>;
-// -> { readonly MacOS: "macOS", readonly Windows: "Windows", readonly Linux: "Linux" }
+type a6 = Reverse<["a", "b"]>; // ['b', 'a']
+type b6 = Reverse<["a", "b", "c"]>; // ['c', 'b', 'a']
 
-// 如果在第二个参数中给出了 true，那么该值应该是一个数字字面值。
+type Reverse<T extends any[]> = T extends [...infer U, infer R]
+  ? [R, ...Reverse<U>]
+  : [];
 
-type e1 = Enum<["macOS", "Windows", "Linux"], true>;
-// -> { readonly MacOS: 0, readonly Windows: 1, readonly Linux: 2 }
+// TODO: 实现一个数组remove
+type ArrayExclude<T extends any[], U extends T[number]> = T[number] extends U
+  ? never
+  : T[number];
 
-type IndexOf<
-  T extends string[],
-  K extends T[number],
-  R extends string[] = []
-> = T[R["length"]] extends K ? R["length"] : IndexOf<T, K, [K, ...R]>;
-
-type Enum<T extends string[], U extends boolean = false> = {
-  readonly [K in T[number] as Capitalize<K>]: U extends true
-    ? IndexOf<T, K>
-    : K;
-};
+type r = ArrayExclude<[1, 2], 1>;

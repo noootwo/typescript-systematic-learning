@@ -61,3 +61,25 @@ type UnionToTuple<T, R extends any[] = [], U = T> = [T] extends [never]
   : T extends T
   ? UnionToTuple<Exclude<U, T>, [...R, T]>
   : [];
+
+// 在这个问题中，类型应该将给定的字符串元组转换为行为类似枚举的对象。此外，一个枚举的性质最好是帕斯卡情形。
+
+type e = Enum<["macOS", "Windows", "Linux"]>;
+// -> { readonly MacOS: "macOS", readonly Windows: "Windows", readonly Linux: "Linux" }
+
+// 如果在第二个参数中给出了 true，那么该值应该是一个数字字面值。
+
+type e1 = Enum<["macOS", "Windows", "Linux"], true>;
+// -> { readonly MacOS: 0, readonly Windows: 1, readonly Linux: 2 }
+
+type IndexOf<
+  T extends string[],
+  K extends T[number],
+  R extends string[] = []
+> = T[R["length"]] extends K ? R["length"] : IndexOf<T, K, [K, ...R]>;
+
+type Enum<T extends string[], U extends boolean = false> = {
+  readonly [K in T[number] as Capitalize<K>]: U extends true
+    ? IndexOf<T, K>
+    : K;
+};
