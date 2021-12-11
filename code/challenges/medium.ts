@@ -747,3 +747,36 @@ type ArrayExclude<T extends any[], U extends T[number]> = T[number] extends U
   : T[number];
 
 type r = ArrayExclude<[1, 2], 1>;
+
+// 实现 lodash 的 _. flip 的类型版本。
+
+// Fliparganuments < t > 类型需要函数类型 t，并返回一个新的函数类型，该类型具有相同的返回类型 t，但是返回的参数是反向的。
+
+type Flipped = FlipArguments<
+  (arg0: string, arg1: number, arg2: boolean) => void
+>;
+// (arg0: boolean, arg1: number, arg2: string) => void
+
+type FlipArguments<T> = T extends (...args: infer Args) => infer ReturnType
+  ? (...args: Reverse<Args>) => ReturnType
+  : never;
+
+// 递归地将数组平坦到深度倍。
+
+type a7 = FlattenDepth<[1, 2, [3, 4], [[[5]]]], 2>; // [1, 2, 3, 4, [5]]. flattern 2 times
+type b7 = FlattenDepth<[1, 2, [3, 4], [[[5]]]]>; // [1, 2, 3, 4, [[5]]]. Depth defaults to be 1
+
+// 如果提供了深度，则保证是正整数。
+
+type FlattenDepth<
+  T extends any[],
+  U extends number = 1,
+  A extends any[] = []
+> = A["length"] extends U
+  ? T
+  : T extends [infer L, ...infer R]
+  ? [
+      ...(L extends any[] ? FlattenDepth<L, U, [...A, 1]> : [L]),
+      ...FlattenDepth<R, U, A>
+    ]
+  : T;
