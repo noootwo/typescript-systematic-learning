@@ -780,3 +780,45 @@ type FlattenDepth<
       ...FlattenDepth<R, U, A>
     ]
   : T;
+
+// 块、元素、修饰符方法(BEM)是一个流行的 CSS 类变数命名原则。
+
+// 例如，块组件将表示为 btn，取决于块的元素将表示为 btn _ price，改变块风格的修饰符将表示为 btn---big 或 btn _ price-- warning。
+
+// 实现由这三个参数生成字符串并的 BEM < b，e，m > 。其中 b 是字符串文字，e 和 m 是字符串数组(可以是空的)。
+
+type WithEorM<
+  S extends string,
+  M extends string,
+  R extends string = ""
+> = R extends "" ? S : `${S}${M}${R}`;
+
+type BEM<
+  B extends string,
+  E extends string = "",
+  M extends string = ""
+> = WithEorM<WithEorM<B, "_", E>, "--", M>;
+
+type a9 = BEM<"btn", "price", "warning">;
+type b9 = BEM<"btn", "price">;
+type c9 = BEM<"btn">;
+
+// 实现 just-flip-object 的类型。例如:
+
+type a10 = Flip<{ a: "x"; b: "y"; c: "z" }>; // {x: 'a', y: 'b', z: 'c'}
+type b10 = Flip<{ a: 1; b: 2; c: 3 }>; // {1: 'a', 2: 'b', 3: 'c'}
+type c10 = Flip<{ a: false; b: true }>; // {false: 'a', true: 'b'}
+
+// 不需要支持嵌套的对象和不能作为对象键(如数组)的值
+
+type Flip<T extends Record<any, any>> = {
+  [K in keyof T as `${T[K]}`]: K;
+};
+
+type Flip1<T extends object> = {
+  [K in keyof T as T[K] extends symbol | number | string
+    ? T[K]
+    : T[K] extends boolean
+    ? `${T[K]}`
+    : never]: K;
+};
