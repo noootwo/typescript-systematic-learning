@@ -211,6 +211,14 @@ type TrimLeft<T extends string> = T extends `${" " | "\n" | "\t"}${infer T}`
   ? TrimLeft<T>
   : T;
 
+// 实现 TrimRight<T> ，它接收确定的字符串类型并返回一个新的字符串，其中新返回的字符串删除了原字符串结尾的空白字符串。
+
+type Trimed = TrimRight<"  Hello World  ">; // 应推导出 '  Hello World'
+
+type TrimRight<T extends string> = T extends `${infer T}${" " | "\n" | "\t"}`
+  ? TrimRight<T>
+  : T;
+
 // 实现 Trim<T>，它采用一个精确的字符串类型，并返回一个新的字符串，从两端删除空白。
 
 type trimed1 = Trim<"  Hello World  ">; // expected to be 'Hello World'
@@ -822,3 +830,109 @@ type Flip1<T extends object> = {
     ? `${T[K]}`
     : never]: K;
 };
+
+// 实现一个通用的斐波纳契数列 < t > 获取一个数字 t 并返回它对应的斐波那契数列。
+
+// 序列开始: 1,1,2,3,5,8,13,21,34,55,89,144，..。
+
+type Result11 = Fibonacci<0>; // []
+type Result12 = Fibonacci<1>; // [1]
+type Result13 = Fibonacci<3>; // [1, 1, 2]
+type Result14 = Fibonacci<8>; // [1, 1, 2, 3, 5, 8, 13, 21]
+type Result15 = Fibonacci<20>; // 20 => max length:[1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765]
+
+type isInteger<T extends number> = `${T}` extends `${infer L}.${infer R}`
+  ? false
+  : true;
+
+type Fibonacci<
+  T extends number,
+  U extends any[] = [],
+  F extends any[] = [],
+  S extends any[] = [1]
+> = isInteger<T> extends true
+  ? T extends 0
+    ? U
+    : [1, ...U]["length"] extends T
+    ? [1, ...U]
+    : Fibonacci<T, [...U, [...F, ...S]["length"]], S, [...F, ...S]>
+  : never;
+
+//  在这个挑战中，你应该实现类型更大的 < t，u > 像 t > u
+
+//  负数不需要考虑。
+
+type a11 = GreaterThan<2, 1>; //should be true
+
+type a12 = GreaterThan<1, 1>; //should be false
+
+type a13 = GreaterThan<1, 2>; //should be false
+
+type GreaterThan<
+  T extends number,
+  U extends number,
+  F extends any[] = [],
+  S extends any[] = []
+> = F["length"] extends T
+  ? false
+  : S["length"] extends U
+  ? true
+  : GreaterThan<T, U, [...F, 1], [...S, 1]>;
+
+// 在这个挑战中，你应该实现一个类型 Zip < t，u > ，t 和 u 必须是 Tuple
+
+type exp = Zip<[1, 2], [true, false]>; // expected to be [[1, true], [2, false]]
+
+type Zip<T extends any[], U extends any[]> = T extends [infer L, ...infer R]
+  ? U extends [infer F, ...infer S]
+    ? [[L, F], ...Zip<R, S>]
+    : []
+  : [];
+
+//  实现一个类型 IsTuple，该类型接受输入类型 t 并返回 t 是否为 tuple 类型。
+
+type case4 = IsTuple<[number]>; // true
+type case5 = IsTuple<readonly [number]>; // true
+type case6 = IsTuple<number[]>; // false
+
+type IsTuple<T> = T extends readonly any[]
+  ? number extends T["length"]
+    ? false
+    : true
+  : false;
+
+// 你认识罗达什吗？块在其中是一个非常有用的函数，现在让我们实现它。Chunk < t，n > 接受两个必需的类型参数，t 必须是一个元组，n 必须是一个整数 > = 1
+// TODO:
+type exp1 = Chunk<[1, 2, 3], 2>; // expected to be [[1, 2], [3]]
+type exp2 = Chunk<[1, 2, 3], 4>; // expected to be [[1, 2, 3]]
+type exp3 = Chunk<[1, 2, 3], 1>; // expected to be [[1], [2], [3]]
+
+type Chunk<
+  T extends any[],
+  U extends number,
+  Res extends any[] = []
+> = GreaterThan<U, T["length"]> extends true
+  ? [T]
+  : T extends [infer L, ...infer R]
+  ? Chunk<R, U, [...Res]>
+  : [];
+
+// 一个常见的 JavaScript 函数，现在让我们用类型来实现它。填充 < t，n，开始？，完结? > ，如您所见，Fill 接受四种类型的参数，其中 t 和 n 是必需的参数，Start 和 End 是可选参数。这些参数的要求是: t 必须是一个元组，n 可以是任何类型的值，Start 和 End 必须是大于或等于0的整数。
+// TODO:
+type exp4 = Fill<[1, 2, 3], 0>; // expected to be [0, 0, 0]
+type exp5 = Fill<[1, 2, 3, 4, 5, 6], 100>; // expected to be [100, 100, 100, 100, 100, 100]
+
+// 为了模拟真实的函数，测试可能包含一些边界条件，希望你能喜欢
+
+type Fill<
+  T extends any[],
+  U extends any,
+  S extends number = 0,
+  E extends number = T["length"],
+  R extends any[] = []
+> = T extends [infer _, ...infer R]
+  ? GreaterThan<
+      [U, ...R]["length"] extends number ? [U, ...R]["length"] : never,
+      S
+    >
+  : T;
