@@ -902,7 +902,7 @@ type IsTuple<T> = T extends readonly any[]
   : false;
 
 // 你认识罗达什吗？块在其中是一个非常有用的函数，现在让我们实现它。Chunk < t，n > 接受两个必需的类型参数，t 必须是一个元组，n 必须是一个整数 > = 1
-// TODO:
+
 type exp1 = Chunk<[1, 2, 3], 2>; // expected to be [[1, 2], [3]]
 type exp2 = Chunk<[1, 2, 3], 4>; // expected to be [[1, 2, 3]]
 type exp3 = Chunk<[1, 2, 3], 1>; // expected to be [[1], [2], [3]]
@@ -910,17 +910,20 @@ type exp3 = Chunk<[1, 2, 3], 1>; // expected to be [[1], [2], [3]]
 type Chunk<
   T extends any[],
   U extends number,
-  Res extends any[] = []
-> = GreaterThan<U, T["length"]> extends true
-  ? [T]
-  : T extends [infer L, ...infer R]
-  ? Chunk<R, U, [...Res]>
-  : [];
+  R extends any[] = []
+> = R["length"] extends U
+  ? [R, ...Chunk<T, U>]
+  : T extends [infer L, ...infer A]
+  ? Chunk<A, U, [...R, L]>
+  : R extends []
+  ? R
+  : [R];
 
 // 一个常见的 JavaScript 函数，现在让我们用类型来实现它。填充 < t，n，开始？，完结? > ，如您所见，Fill 接受四种类型的参数，其中 t 和 n 是必需的参数，Start 和 End 是可选参数。这些参数的要求是: t 必须是一个元组，n 可以是任何类型的值，Start 和 End 必须是大于或等于0的整数。
-// TODO:
+
 type exp4 = Fill<[1, 2, 3], 0>; // expected to be [0, 0, 0]
-type exp5 = Fill<[1, 2, 3, 4, 5, 6], 100>; // expected to be [100, 100, 100, 100, 100, 100]
+type exp5 = Fill<[1, 2, 3, 4, 5, 6], 100, 2, 4>; // expected to be [1, 2, 100, 100, 5, 6]
+type exp6 = Fill<[2, 4, 6, 8, 10, 12, 14, 16, 18, 20], 666, 6>; // expected to be [2, 4, 6, 8, 10, 12, 666, 666, 666, 666]
 
 // 为了模拟真实的函数，测试可能包含一些边界条件，希望你能喜欢
 
@@ -929,10 +932,11 @@ type Fill<
   U extends any,
   S extends number = 0,
   E extends number = T["length"],
-  R extends any[] = []
-> = T extends [infer _, ...infer R]
-  ? GreaterThan<
-      [U, ...R]["length"] extends number ? [U, ...R]["length"] : never,
-      S
-    >
-  : T;
+  A extends any[] = []
+> = T extends [infer L, ...infer R]
+  ? A["length"] extends S
+    ? S extends E
+      ? [...A, ...T]
+      : Fill<R, U, [...A, U]["length"] & number, E, [...A, U]>
+    : Fill<R, U, S, E, [...A, L]>
+  : A;
