@@ -749,13 +749,6 @@ type Reverse<T extends any[]> = T extends [...infer U, infer R]
   ? [R, ...Reverse<U>]
   : [];
 
-// TODO: 实现一个数组remove
-type ArrayExclude<T extends any[], U extends T[number]> = T[number] extends U
-  ? never
-  : T[number];
-
-type r = ArrayExclude<[1, 2], 1>;
-
 // 实现 lodash 的 _. flip 的类型版本。
 
 // Fliparganuments < t > 类型需要函数类型 t，并返回一个新的函数类型，该类型具有相同的返回类型 t，但是返回的参数是反向的。
@@ -940,3 +933,9 @@ type Fill<
       : Fill<R, U, [...A, U]["length"] & number, E, [...A, U]>
     : Fill<R, U, S, E, [...A, L]>
   : A;
+
+// 实现 math.trunk 的类型版本，该版本接受字符串或数字，并通过删除任何小数位来返回数字的整数部分。
+
+type A3 = Trunc<12.34>; // 12
+
+type Trunc<T extends number> = `${T}` extends `${infer L}.${infer R}` ? L : T;

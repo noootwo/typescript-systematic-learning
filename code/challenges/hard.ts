@@ -72,14 +72,38 @@ type e = Enum<["macOS", "Windows", "Linux"]>;
 type e1 = Enum<["macOS", "Windows", "Linux"], true>;
 // -> { readonly MacOS: 0, readonly Windows: 1, readonly Linux: 2 }
 
-type IndexOf<
-  T extends string[],
-  K extends T[number],
-  R extends string[] = []
-> = T[R["length"]] extends K ? R["length"] : IndexOf<T, K, [K, ...R]>;
-
 type Enum<T extends string[], U extends boolean = false> = {
   readonly [K in T[number] as Capitalize<K>]: U extends true
     ? IndexOf<T, K>
     : K;
 };
+
+// Currying 是一种技术，它将一个接受多个参数的函数转换为一系列接受单个参数的函数。
+
+const add = (a: number, b: number) => a + b;
+const three = add(1, 2);
+
+const curriedAdd = Currying(add);
+const five = curriedAdd(2)(3);
+
+// 传递给 Currying 的函数可能有多个参数，您需要正确地键入它。
+
+// 在这个挑战中，curry 函数一次只接受一个参数。一旦指定了所有的参数，它应该返回它的结果。
+
+type FirstArgument<T extends any[]> = T extends [...infer L, infer R]
+  ? L extends []
+    ? T
+    : FirstArgument<L>
+  : [];
+
+type Curry<T extends (...arg: any) => any> = T extends (
+  ...arg: infer A
+) => infer B
+  ? A extends [infer L, ...infer R]
+    ? R extends []
+      ? T
+      : (...args: FirstArgument<A>) => Curry<(...args: R) => B>
+    : T
+  : T;
+
+declare function Currying<T extends (...arg: any) => any>(fn: T): Curry<T>;
