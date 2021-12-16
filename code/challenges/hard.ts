@@ -107,3 +107,22 @@ type Curry<T extends (...arg: any) => any> = T extends (
   : T;
 
 declare function Currying<T extends (...arg: any) => any>(fn: T): Curry<T>;
+
+// 实现高级应用型联合交叉
+
+type I = Union2Intersection<"foo" | 42 | true>; // expected to be 'foo' & 42 & true
+type I1 = Union2Intersection<(() => "foo") | ((i: 42) => true)>;
+
+type Union2Intersection<T> = (T extends any ? (a: T) => any : never) extends (
+  a: infer U
+) => any
+  ? U
+  : never;
+
+// 实现高级应用类型 getrelemb < t > ，它保留了所有需要的字段
+
+type I2 = GetRequired<{ foo: number; bar?: string }>; // expected to be { foo: number }
+
+type GetRequired<T extends { [key: string]: any }> = {
+  [K in keyof T as undefined extends T[K] ? never : K]: T[K];
+};
