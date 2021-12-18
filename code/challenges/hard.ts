@@ -119,10 +119,11 @@ type Union2Intersection<T> = (T extends any ? (a: T) => any : never) extends (
   ? U
   : never;
 
-// 实现高级应用类型 getrelemb < t > ，它保留了所有需要的字段
+// 实现高级应用类型 GetRequired < t > ，它保留了所有需要的字段
 
 type I2 = GetRequired<{ foo: number; bar?: string }>; // expected to be { foo: number }
+type I3 = GetRequired<{ foo: undefined; bar?: undefined }>;
 
-type GetRequired<T extends { [key: string]: any }> = {
-  [K in keyof T as undefined extends T[K] ? never : K]: T[K];
+type GetRequired<T, P extends Required<T> = Required<T>> = {
+  [K in keyof T as T[K] extends P[K] ? K : never]: P[K];
 };
