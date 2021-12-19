@@ -127,3 +127,20 @@ type I3 = GetRequired<{ foo: undefined; bar?: undefined }>;
 type GetRequired<T, P extends Required<T> = Required<T>> = {
   [K in keyof T as T[K] extends P[K] ? K : never]: P[K];
 };
+
+// 实现高级的 util 类型 getopt < t > ，它保留了所有可选字段
+
+type I4 = GetOptional<{ foo: number; bar?: string }>; // expected to be { bar?: string }
+
+type GetOptional<T, P extends Required<T> = Required<T>> = {
+  [K in keyof T as T[K] extends P[K] ? never : K]: P[K];
+};
+
+// 实现高级的 util 类型 RequiredKeys < t > ，它将所有需要的密钥集成为一个联合。
+
+type Result16 = RequiredKeys<{ foo: number; bar?: string }>;
+// expected to be “foo”
+
+type RequiredKeys<T> = keyof {
+  [K in keyof T as {} extends Pick<T, K> ? never : K]: K;
+};
