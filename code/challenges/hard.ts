@@ -144,3 +144,32 @@ type Result16 = RequiredKeys<{ foo: number; bar?: string }>;
 type RequiredKeys<T> = keyof {
   [K in keyof T as {} extends Pick<T, K> ? never : K]: K;
 };
+
+// 实现高级的 util 类型 OptionalKeys < t > ，它将所有可选的密钥组成一个联合。
+
+type Result17 = OptionalKeys<{ foo: number; bar?: string }>;
+
+type t = {} extends Omit<{ foo: number; bar?: string }, "foo"> ? 1 : 2;
+
+type OptionalKeys<T> = keyof {
+  [K in keyof T as {} extends Omit<T, K> ? never : K]: K;
+};
+
+// 实现大写单词 < t > ，它将字符串中每个单词的首字母转换为大写，其余单词保持原样。
+
+type Capitalized = CapitalizeWords<"hello world, my friends">; // expected to be 'Hello World, My Friends'
+type Capitalized1 = CapitalizeWords<"">; // expected to be ''
+type Capitalized2 = CapitalizeWords<"FOOBAR">;
+type Capitalized3 = CapitalizeWords<"foo bar">;
+type Capitalized4 = CapitalizeWords<"foo bar hello world">;
+type Capitalized5 = CapitalizeWords<"foo bar.hello,world">;
+
+type b = " " & (" " | "," | ".");
+
+type CapitalizeWords<S extends string> = S extends `${infer L} ${infer R}`
+  ? `${Capitalize<L>} ${CapitalizeWords<R>}`
+  : S extends `${infer L}.${infer R}`
+  ? `${Capitalize<L>}.${CapitalizeWords<R>}`
+  : S extends `${infer L},${infer R}`
+  ? `${Capitalize<L>},${CapitalizeWords<R>}`
+  : Capitalize<S>;
