@@ -2,7 +2,7 @@
 
 type IndexOf<
   T extends any[],
-  K extends number,
+  K,
   R extends any[] = []
 > = T[R["length"]] extends K
   ? R["length"]

@@ -164,8 +164,6 @@ type Capitalized3 = CapitalizeWords<"foo bar">;
 type Capitalized4 = CapitalizeWords<"foo bar hello world">;
 type Capitalized5 = CapitalizeWords<"foo bar.hello,world">;
 
-type b = " " & (" " | "," | ".");
-
 type CapitalizeWords<S extends string> = S extends `${infer L} ${infer R}`
   ? `${Capitalize<L>} ${CapitalizeWords<R>}`
   : S extends `${infer L}.${infer R}`
@@ -173,3 +171,40 @@ type CapitalizeWords<S extends string> = S extends `${infer L} ${infer R}`
   : S extends `${infer L},${infer R}`
   ? `${Capitalize<L>},${CapitalizeWords<R>}`
   : Capitalize<S>;
+
+// 实现 CamelCase < t > 将 snake _ case 字符串转换为 CamelCase。
+
+type camelCase1 = CamelCaseHard<"hello_world_with_types">; // expected to be 'helloWorldWithTypes'
+type camelCase2 = CamelCaseHard<"HELLO_WORLD_WITH_TYPES">; // expected to be same as previous one
+
+type CamelCaseHard<S extends string> = S extends `${infer L}_${infer R}`
+  ? `${Capitalize<Lowercase<L>>}${CamelCaseHard<R>}`
+  : Capitalize<Lowercase<S>>;
+
+// 在 c 语言中有一个函数: printf。这个函数允许我们打印带格式的东西。像这样:
+
+// printf("The result is %d.", 42);
+
+// 这个挑战要求您解析输入字符串并提取格式占位符，如% d 和% f。例如，如果输入字符串是“ The result is% d”，解析的结果是一个 tuple [‘ dec’]。
+
+// 下面是地图:
+
+type ControlsMap = {
+  c: "char";
+  s: "string";
+  d: "dec";
+  o: "oct";
+  h: "hex";
+  f: "float";
+  p: "pointer";
+};
+
+type PrintF<S extends string> = S extends `${infer _}%${infer R}`
+  ? [
+      ControlsMap[(R extends `${infer F}${infer _}` ? F : R) &
+        keyof ControlsMap],
+      ...PrintF<R>
+    ]
+  : [];
+
+type Result18 = PrintF<"The result is %d%c%o.">;
