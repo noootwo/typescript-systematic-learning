@@ -341,11 +341,6 @@ type Permutation<T, U = T> = [U] extends [never]
   ? []
   : [T, ...Permutation<Exclude<U, T>>];
 
-// 计算字符串文本的长度，它的行为类似于 String # length。
-type Split<S extends string> = S extends `${infer A}${infer B}`
-  ? [A, ...Split<B>]
-  : [];
-
 type LengthOfString<S extends string> = Split<S>["length"];
 
 const len: LengthOfString<"123456"> = 6;
@@ -939,3 +934,23 @@ type Fill<
 type A3 = Trunc<12.34>; // 12
 
 type Trunc<T extends number> = `${T}` extends `${infer L}.${infer R}` ? L : T;
+
+// 实现类型版本的 Array.lastIndexOf，LastIndexOf < t，u > 接受一个 Array t，任何 u，并返回 Array t 中最后一个 u 的索引
+
+type Res18 = LastIndexOf<[1, 2, 3, 2, 1], 2>; // 3
+type Res19 = LastIndexOf<[0, 0, 0], 2>; // -1
+
+type LastIndexOf<
+  T extends any[],
+  U extends any,
+  A extends any[] = [],
+  I extends number = -1
+> = T extends [infer F, ...infer R]
+  ? LastIndexOf<R, U, [...A, F], F extends U ? A["length"] : I>
+  : I;
+
+type LastIndexOf1<T extends any[], U> = T extends [...infer I, infer L]
+  ? L extends U
+    ? I["length"]
+    : LastIndexOf<I, U>
+  : -1;

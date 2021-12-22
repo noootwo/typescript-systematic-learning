@@ -2,10 +2,9 @@
 
 type toString<T extends string | number> = `${T}`;
 
-type Join<T extends string[], U extends string | number> = T extends [
-  infer F,
-  ...infer R
-]
+type Join<T extends string[], U extends string | number> = T["length"] extends 1
+  ? T[0]
+  : T extends [infer F, ...infer R]
   ? R extends string[]
     ? `${F extends string ? F : ""}${U}${R["length"] extends 1
         ? R[0]
@@ -16,3 +15,4 @@ type Join<T extends string[], U extends string | number> = T extends [
 type Res = Join<["a", "p", "p", "l", "e"], "-">; // expected to be 'a-p-p-l-e'
 type Res1 = Join<["Hello", "World"], " ">; // expected to be 'Hello World'
 type Res2 = Join<["2", "2", "2"], 1>; // expected to be '21212'
+type Res3 = Join<["2"], 1>; // expected to be '21212'
