@@ -45,6 +45,8 @@ interface Options<D, C extends A, M> {
 
 declare function SimpleVue<D, C extends A, M>(options: Options<D, C, M>): any;
 
+// -----------------------------------------------------------------------------------
+
 // 实现一个类型 uniontuple，它将联合转换为元组。
 
 // 正如我们所知，联合是一个无序的结构，但是元组是一个有序的结构，这意味着我们不应该预先假设任何秩序将被保留在一个联合条款之间，当联合被创建或转换。
@@ -62,6 +64,8 @@ type UnionToTuple<T, R extends any[] = [], U = T> = [T] extends [never]
   ? UnionToTuple<Exclude<U, T>, [...R, T]>
   : [];
 
+// -----------------------------------------------------------------------------------
+
 // 在这个问题中，类型应该将给定的字符串元组转换为行为类似枚举的对象。此外，一个枚举的性质最好是帕斯卡情形。
 
 type e = Enum<["macOS", "Windows", "Linux"]>;
@@ -77,6 +81,8 @@ type Enum<T extends string[], U extends boolean = false> = {
     ? IndexOf<T, K>
     : K;
 };
+
+// -----------------------------------------------------------------------------------
 
 // Currying 是一种技术，它将一个接受多个参数的函数转换为一系列接受单个参数的函数。
 
@@ -108,6 +114,8 @@ type Curry<T extends (...arg: any) => any> = T extends (
 
 declare function Currying<T extends (...arg: any) => any>(fn: T): Curry<T>;
 
+// -----------------------------------------------------------------------------------
+
 // 实现高级应用型联合交叉
 
 type I = Union2Intersection<"foo" | 42 | true>; // expected to be 'foo' & 42 & true
@@ -119,6 +127,8 @@ type Union2Intersection<T> = (T extends any ? (a: T) => any : never) extends (
   ? U
   : never;
 
+// -----------------------------------------------------------------------------------
+
 // 实现高级应用类型 GetRequired < t > ，它保留了所有需要的字段
 
 type I2 = GetRequired<{ foo: number; bar?: string }>; // expected to be { foo: number }
@@ -128,6 +138,8 @@ type GetRequired<T, P extends Required<T> = Required<T>> = {
   [K in keyof T as T[K] extends P[K] ? K : never]: P[K];
 };
 
+// -----------------------------------------------------------------------------------
+
 // 实现高级的 util 类型 getopt < t > ，它保留了所有可选字段
 
 type I4 = GetOptional<{ foo: number; bar?: string }>; // expected to be { bar?: string }
@@ -135,6 +147,8 @@ type I4 = GetOptional<{ foo: number; bar?: string }>; // expected to be { bar?: 
 type GetOptional<T, P extends Required<T> = Required<T>> = {
   [K in keyof T as T[K] extends P[K] ? never : K]: P[K];
 };
+
+// -----------------------------------------------------------------------------------
 
 // 实现高级的 util 类型 RequiredKeys < t > ，它将所有需要的密钥集成为一个联合。
 
@@ -145,6 +159,8 @@ type RequiredKeys<T> = keyof {
   [K in keyof T as {} extends Pick<T, K> ? never : K]: K;
 };
 
+// -----------------------------------------------------------------------------------
+
 // 实现高级的 util 类型 OptionalKeys < t > ，它将所有可选的密钥组成一个联合。
 
 type Result17 = OptionalKeys<{ foo: number; bar?: string }>;
@@ -154,6 +170,8 @@ type t = {} extends Omit<{ foo: number; bar?: string }, "foo"> ? 1 : 2;
 type OptionalKeys<T> = keyof {
   [K in keyof T as {} extends Omit<T, K> ? never : K]: K;
 };
+
+// -----------------------------------------------------------------------------------
 
 // 实现大写单词 < t > ，它将字符串中每个单词的首字母转换为大写，其余单词保持原样。
 
@@ -172,6 +190,8 @@ type CapitalizeWords<S extends string> = S extends `${infer L} ${infer R}`
   ? `${Capitalize<L>},${CapitalizeWords<R>}`
   : Capitalize<S>;
 
+// -----------------------------------------------------------------------------------
+
 // 实现 CamelCase < t > 将 snake _ case 字符串转换为 CamelCase。
 
 type camelCase1 = CamelCaseHard<"hello_world_with_types">; // expected to be 'helloWorldWithTypes'
@@ -180,6 +200,8 @@ type camelCase2 = CamelCaseHard<"HELLO_WORLD_WITH_TYPES">; // expected to be sam
 type CamelCaseHard<S extends string> = S extends `${infer L}_${infer R}`
   ? `${Capitalize<Lowercase<L>>}${CamelCaseHard<R>}`
   : Capitalize<Lowercase<S>>;
+
+// -----------------------------------------------------------------------------------
 
 // 在 c 语言中有一个函数: printf。这个函数允许我们打印带格式的东西。像这样:
 
@@ -208,3 +230,54 @@ type PrintF<S extends string> = S extends `${infer _}%${infer R}`
   : [];
 
 type Result18 = PrintF<"The result is %d%c%o.">;
+
+// -----------------------------------------------------------------------------------
+
+// 这个挑战是从6-Simple Vue 开始的，你应该先完成这个挑战，然后基于它修改你的代码来开始这个挑战。
+
+// 除了简单的 Vue，我们现在有一个新的道具领域的选择。这是 Vue 的道具选项的简化版本。以下是一些规则。
+
+// 道具是一个物体，包含了每一个领域作为关键的真正的道具注入到这里。注入的道具在所有情况下都可以访问，包括数据、计算和方法。
+
+// Prop 将由构造函数或具有包含构造函数的类型字段的对象定义。
+
+props: {
+  foo: Boolean;
+}
+// or
+props: {
+  foo: {
+    type: Boolean;
+  }
+}
+// 应该被推断为类型 Props = { foo: boolean }。
+
+// 当传递多个构造函数时，类型应该被推断为联合。
+
+props: {
+  foo: {
+    type: [Boolean, Number, String];
+  }
+}
+
+type Props = { foo: boolean | number | string };
+
+// 当传递一个空对象时，应该将该键推导到任何。
+
+// 有关更多指定的用例，请参阅测试用例部分。
+
+// 在这个挑战中，Vue 中的 required、 default 和 array 道具不被考虑。
+
+// TODO:
+
+// -----------------------------------------------------------------------------------
+
+// 有时检测是否有任何类型的值是很有用的。这在处理第三方打字稿模块时特别有用，该模块可以导出模块 API 中的任何值。当你压制隐私支票的时候，知道这些也是很好的。
+
+// 因此，让我们编写一个实用程序类型 IsAny < t > ，它接受输入类型 t。如果 t 是任何值，返回 true，否则返回 false。
+
+type A4 = IsAny<any>;
+type A5 = IsAny<number>;
+type A6 = IsAny<string>;
+
+type IsAny<T> = 1 extends T & 0 ? true : false;
