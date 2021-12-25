@@ -281,3 +281,41 @@ type A5 = IsAny<number>;
 type A6 = IsAny<string>;
 
 type IsAny<T> = 1 extends T & 0 ? true : false;
+
+// -----------------------------------------------------------------------------------
+
+// Lodash 中的 get 函数是访问 JavaScript 中嵌套值的一个非常方便的帮助器。然而，当我们谈到打字稿时，使用这样的函数会使你丢失类型信息。随着 TS 4.1即将推出的 Template Literal Types 特性，正确地输入 get 成为可能。你能实现它吗？
+
+type Data = {
+  foo: {
+    bar: {
+      value: "foobar";
+      count: 6;
+    };
+    included: true;
+  };
+  hello: "world";
+};
+
+type A7 = Get<Data, "hello">; // 'world'
+type B1 = Get<Data, "foo.bar.count">; // 6
+type C1 = Get<Data, "foo.bar">; // { value: 'foobar', count: 6 }
+
+// 在此挑战中不需要访问数组。
+
+type Get<
+  T extends { [key in string]: any },
+  U extends string
+> = U extends `${infer L}.${infer R}` ? Get<T[L], R> : T[U];
+
+// -----------------------------------------------------------------------------------
+
+// 将字符串文字转换为数字，其行为类似 Number.parseInt。
+
+type ToNumber<
+  T extends string,
+  U extends any[] = []
+> = `${U["length"]}` extends T ? U["length"] : ToNumber<T, [...U, 1]>;
+
+type N = ToNumber<"0">; // expected to be 0
+type N1 = ToNumber<"5">; // expected to be 5
