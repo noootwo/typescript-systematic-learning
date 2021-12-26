@@ -319,3 +319,33 @@ type ToNumber<
 
 type N = ToNumber<"0">; // expected to be 0
 type N1 = ToNumber<"5">; // expected to be 5
+
+// -----------------------------------------------------------------------------------
+
+// 实现一个类型 FilterOut < t，f > ，它从元组 t 中过滤出给定类型 f 的项。
+
+type Filtered = FilterOut<[1, 2, null, 3], null>; // [1, 2, 3]
+
+type FilterOut<T extends any[], U> = T extends [infer L, ...infer R]
+  ? [...(L extends U ? [] : [L]), ...FilterOut<R, U>]
+  : T;
+
+// -----------------------------------------------------------------------------------
+
+// 实现 Format < t extends string > generic。
+
+type FormatCase1 = Format<"%sabc">; // FormatCase1 : string => string
+type FormatCase2 = Format<"%s%dabc">; // FormatCase2 : string => number => string
+type FormatCase3 = Format<"sdabc">; // FormatCase3 :  string
+type FormatCase4 = Format<"sd%abc">; // FormatCase4 :  string
+
+type FormatMap = {
+  s: string;
+  d: number;
+};
+
+type Format<T extends string> = T extends `${string}%${infer L}${infer R}`
+  ? L extends keyof FormatMap
+    ? (x: FormatMap[L]) => Format<R>
+    : Format<R>
+  : string;
