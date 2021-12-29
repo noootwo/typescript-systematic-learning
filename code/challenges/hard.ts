@@ -1,3 +1,5 @@
+import { Equal } from "@type-challenges/utils";
+
 // 实现类似Vue的类型支持的简化版本。
 
 // 通过提供函数名称SimpleVue（类似于Vue.extend或defineComponent），它应该正确地推断出计算和方法内部的this类型。
@@ -349,3 +351,31 @@ type Format<T extends string> = T extends `${string}%${infer L}${infer R}`
     ? (x: FormatMap[L]) => Format<R>
     : Format<R>
   : string;
+
+// TypeScript 具有结构类型系统，但有时您希望函数只接受一些以前定义良好的唯一对象(如在名义类型系统中) ，而不接受任何具有必需字段的对象。
+
+// 创建一个类型，该类型接受一个对象，并使其及其中所有深度嵌套的对象都是惟一的，同时保留所有对象的字符串和数字键，以及这些键上所有属性的值。
+
+// 原始类型和生成的唯一类型必须是相互可分配的，但不能完全相同。
+
+type Foo = { foo: 2; bar: { 0: 1 }; baz: { 0: 1 } };
+
+type UniqFoo = DeepObjectToUniq<Foo>;
+
+declare let foo: Foo;
+declare let uniqFoo: UniqFoo;
+
+uniqFoo = foo; // ok
+foo = uniqFoo; // ok
+
+type T0 = Equal<UniqFoo, Foo>; // false
+type T1 = UniqFoo["foo"]; // 2
+type T2 = Equal<UniqFoo["bar"], UniqFoo["baz"]>; // false
+type T3 = UniqFoo["bar"][0]; // 1
+type T4 = Equal<keyof Foo & string, keyof UniqFoo & string>; // true
+
+type DeepObjectToUniq<T extends { [k in string | number]: any }> = {
+  [K in keyof T]: T[K] extends { [k in string | number]: any }
+    ? DeepObjectToUniq<T[K]> & { _uniq?: [T, K] }
+    : T[K];
+};
