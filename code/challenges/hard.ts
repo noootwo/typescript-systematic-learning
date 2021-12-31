@@ -381,3 +381,20 @@ type DeepObjectToUniq<T extends { [k in string | number]: any }> = {
     ? DeepObjectToUniq<T[K]> & { _uniq?: [T, K] }
     : T[K];
 };
+
+// 实现一个类型 LengthOfString < s > ，它计算模板字符串的长度(如298-Length of String) :
+
+type T5 = LengthOfString<"foo">; // 3
+type T6 =
+  LengthOfString<"类型必须支持长达几百个字符的字符串(通常对字符串长度的递归计算受到 TS 递归函数调用深度的限制，也就是说，它支持长达45个字符的字符串)。">; // 70
+
+// 类型必须支持长达几百个字符的字符串(通常对字符串长度的递归计算受到 TS 递归函数调用深度的限制，也就是说，它支持长达45个字符的字符串)。
+
+type LengthOfString<
+  S extends string,
+  R extends number[] = []
+> = S extends `${infer R1}${infer R2}${infer R3}${infer R4}${infer R5}${infer R6}${infer R7}${infer R8}${infer R9}${infer R10}${infer Rest}`
+  ? LengthOfString<Rest, [...R, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]>
+  : S extends `${infer _}${infer Rest}`
+  ? LengthOfString<Rest, [...R, 1]>
+  : [...R]["length"];
