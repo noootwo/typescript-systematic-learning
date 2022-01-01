@@ -382,11 +382,15 @@ type DeepObjectToUniq<T extends { [k in string | number]: any }> = {
     : T[K];
 };
 
+// -----------------------------------------------------------------------------------
+
 // 实现一个类型 LengthOfString < s > ，它计算模板字符串的长度(如298-Length of String) :
 
 type T5 = LengthOfString<"foo">; // 3
 type T6 =
   LengthOfString<"类型必须支持长达几百个字符的字符串(通常对字符串长度的递归计算受到 TS 递归函数调用深度的限制，也就是说，它支持长达45个字符的字符串)。">; // 70
+
+// -----------------------------------------------------------------------------------
 
 // 类型必须支持长达几百个字符的字符串(通常对字符串长度的递归计算受到 TS 递归函数调用深度的限制，也就是说，它支持长达45个字符的字符串)。
 
@@ -398,3 +402,62 @@ type LengthOfString<
   : S extends `${infer _}${infer Rest}`
   ? LengthOfString<Rest, [...R, 1]>
   : [...R]["length"];
+
+// 创建一个类型安全的字符串连接工具，可以这样使用:
+
+const hyphenJoiner = join("-");
+const result = hyphenJoiner("a", "b", "c"); // = 'a-b-c'
+
+// 或者:
+
+// 当我们传递一个空的分隔符(即“”)来连接时，我们应该让字符串保持原样，即:
+
+const result2 = join("")("a", "b", "c"); // = 'abc'
+
+// 当只传递一个项时，我们应该返回原始项(不添加任何分隔符) :
+
+const result3 = join("-")("a"); // = 'a'
+
+declare function join<S extends string>(
+  delimiter: S
+): <T extends string[]>(...parts: T) => Join<T, S>;
+
+// -----------------------------------------------------------------------------------
+
+// 实现一个类型 DeepPick，它扩展了实用程序类型 Pick。
+
+type obj = {
+  name: "hoge";
+  age: 20;
+  friend: {
+    name: "fuga";
+    age: 30;
+    family: {
+      name: "baz";
+      age: 1;
+    };
+  };
+};
+
+type T7 = DeepPick<obj, "name">; // { name : 'hoge' }
+type T8 = DeepPick<obj, "name" | "friend.name">; // { name : 'hoge' } & { friend: { name: 'fuga' }}
+type T9 = DeepPick<obj, "name" | "friend.name" | "friend.family.name">; // { name : 'hoge' } &  { friend: { name: 'fuga' }} & { friend: { family: { name: 'baz' }}}
+
+type UnionToFunc<T> = T extends any ? (x: T) => 0 : never;
+
+type d = UnionToIntersect<T8>;
+
+type UnionToIntersect<T> = UnionToFunc<T> extends (x: infer I) => 0 ? I : never;
+
+type DeepPick<
+  T extends Record<string, any>,
+  U extends string
+> = UnionToIntersect<
+  U extends keyof T
+    ? { [K in U]: T[K] }
+    : U extends `${infer L}.${infer R}`
+    ? L extends keyof T
+      ? { [K in L]: DeepPick<T[K], R> }
+      : never
+    : never
+>;
