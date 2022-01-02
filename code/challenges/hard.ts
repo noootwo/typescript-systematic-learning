@@ -199,8 +199,13 @@ type CapitalizeWords<S extends string> = S extends `${infer L} ${infer R}`
 type camelCase1 = CamelCaseHard<"hello_world_with_types">; // expected to be 'helloWorldWithTypes'
 type camelCase2 = CamelCaseHard<"HELLO_WORLD_WITH_TYPES">; // expected to be same as previous one
 
-type CamelCaseHard<S extends string> = S extends `${infer L}_${infer R}`
-  ? `${Capitalize<Lowercase<L>>}${CamelCaseHard<R>}`
+type CamelCaseHard<S extends string, F = 0> = S extends `${infer L}_${infer R}`
+  ? `${F extends 0 ? Lowercase<L> : Capitalize<Lowercase<L>>}${CamelCaseHard<
+      R,
+      1
+    >}`
+  : F extends 0
+  ? Lowercase<S>
   : Capitalize<Lowercase<S>>;
 
 // -----------------------------------------------------------------------------------
@@ -461,3 +466,26 @@ type DeepPick<
       : never
     : never
 >;
+
+// -----------------------------------------------------------------------------------
+
+// 实现 Camelize，它将对象从 snake _ case 转换为 camelCase
+
+type R = Camelize<{
+  some_prop: string;
+  prop: { another_prop: string };
+  array: [{ snake_case: string }];
+}>;
+
+// expected to be
+// {
+//   someProp: string,
+//   prop: { anotherProp: string },
+//   array: [{ snakeCase: string }]
+// }
+
+type Camelize<T extends object> = {
+  [K in keyof T as CamelCaseHard<K & string>]: T[K] extends object
+    ? Camelize<T[K]>
+    : T[K];
+};
