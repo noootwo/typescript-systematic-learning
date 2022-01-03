@@ -105,3 +105,16 @@
 
 // type a = never[];
 // let b: a = [];
+
+function fibonacci(n: number, cur = 0, next = 1): any {
+  if (n == 0) return 0;
+  if (n == 1) return next;
+  return [
+    cur,
+    ...(n - 1 <= 1
+      ? [fibonacci(n - 1, next, cur + next)]
+      : fibonacci(n - 1, next, cur + next)),
+  ];
+}
+
+console.log(fibonacci(10));

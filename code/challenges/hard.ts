@@ -489,3 +489,61 @@ type Camelize<T extends object> = {
     ? Camelize<T[K]>
     : T[K];
 };
+
+// -----------------------------------------------------------------------------------
+
+// 从字符串中删除指定的字符。
+
+type Butterfly = DropString<"foobar!", "fb">; // 'ooar!'
+
+type String2Union<S extends string> = S extends `${infer L}${infer R}`
+  ? L | String2Union<R>
+  : S;
+
+type DropString<
+  S extends string,
+  U extends string
+> = S extends `${infer L}${infer R}`
+  ? L extends String2Union<U>
+    ? DropString<`${R}`, U>
+    : `${L}${DropString<`${R}`, U>}`
+  : S;
+
+// -----------------------------------------------------------------------------------
+
+// 众所周知的 split ()方法通过查找分隔符将字符串分解为一个子字符串数组，并返回新的数组。这个挑战的目标是在类型系统中使用分隔符来分割字符串！
+
+type result = Split<"Hi! How are you?", " ">; // should be ['Hi!', 'How', 'are', 'you?']
+
+// 实现通用的 ClassPublicKeys < t > ，它返回一个类的所有公钥。
+class A1 {
+  public str!: string;
+  protected num!: number;
+  private bool!: boolean;
+  getNum() {
+    return Math.random();
+  }
+}
+
+type publicKeys = ClassPublicKeys<A1>; // 'str' | 'getNum'
+
+type ClassPublicKeys<T extends object> = {
+  [K in keyof T]: K;
+}[keyof T];
+
+// -----------------------------------------------------------------------------------
+
+// 实现一个通用的 IsRequiredKey < t，k > ，返回 k 是否是 t 的必需键。
+
+type A2 = IsRequiredKey<{ a: number; b?: string }, "a">; // true
+type B = IsRequiredKey<{ a: number; b?: string }, "b">; // false
+type C = IsRequiredKey<{ a: number; b?: string }, "b" | "a">; // false
+
+type IsRequiredKey<
+  T extends object,
+  U extends string
+> = UnionToTuple<U> extends [infer L, ...infer R]
+  ? undefined extends T[L & keyof T]
+    ? false
+    : IsRequiredKey<T, R[number] & string>
+  : true;
