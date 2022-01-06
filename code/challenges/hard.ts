@@ -547,3 +547,134 @@ type IsRequiredKey<
     ? false
     : IsRequiredKey<T, R[number] & string>
   : true;
+
+// -----------------------------------------------------------------------------------
+
+// 实现 Object.fromEntries 的类型版本
+
+interface Model {
+  name: string;
+  age: number;
+  locations: string[] | null;
+}
+
+type ModelEntries =
+  | ["name", string]
+  | ["age", number]
+  | ["locations", string[] | null];
+
+type result2 = ObjectFromEntries<ModelEntries>; // expected to be Model
+
+type ObjectFromEntries<T extends [string, any]> = {
+  [K in T as K[0]]: K[1];
+};
+
+// -----------------------------------------------------------------------------------
+
+// 实现类型 IsPalindrome < t > 以检查字符串或数字是否为回文。
+
+type result3 = IsPalindrome<"abc">; // false
+type result4 = IsPalindrome<121>; // true
+type result5 = IsPalindrome<"abba">; // true
+
+type IsPalindrome<T extends string | number> =
+  `${T}` extends `${infer L}${infer R}`
+    ? R extends ""
+      ? true
+      : R extends `${infer N}${L}`
+      ? IsPalindrome<N>
+      : false
+    : true;
+
+// -----------------------------------------------------------------------------------
+
+// 实现高级的 util 类型 MutableKeys，它将所有可变(不是只读)键选择为一个联合。
+
+type Keys = MutableKeys<{ readonly foo: string; bar: number }>;
+// expected to be “bar”
+
+type MutableKeys<T extends { [k in string]: any }> = keyof {
+  [K in keyof T as Equal<Pick<T, K>, Readonly<Pick<T, K>>> extends true
+    ? never
+    : K]: T[K];
+};
+
+// -----------------------------------------------------------------------------------
+
+// 创建类型级别的函数，其类型类似于 Pinia 库。实际上，您不需要实现函数，只需添加类型即可。
+
+// 此函数只接收一个类型为对象的参数。对象包含4个属性:
+
+// id - 只是一个字符串(必需的)
+// state - 一个函数，它将返回一个对象作为存储的状态(必需)
+// getters - 一个对象，其方法类似于 Vue 的计算值或 Vuex 的 getters，细节在下面(可选)
+// actions - 一个对象的方法，可以做副作用和变异状态，详情如下(可选)
+
+// Getters
+// 当你这样定义一个商店:
+
+const store1 = defineStore({
+  id: "1",
+  state: () => {
+    return { xxx: "123" };
+  },
+  getters: {
+    getSomething() {
+      return this.xxx;
+    },
+  },
+});
+
+// 你应该这样使用它:
+
+store1.getSomething;
+
+// 而不是:
+
+store1.getSomething(); // error
+
+// 另外，getter 可以通过这个访问状态和/或其他 getter，但状态是只读的。
+
+// Actions
+// 当你这样定义一个商店:
+
+const store2 = defineStore({
+  id: "2",
+  state: () => {
+    return { xxx: "123" };
+  },
+  actions: {
+    doSideEffect() {
+      this.xxx = "xxx";
+      return "ok";
+    },
+  },
+});
+
+// 使用它只是为了称呼它:
+
+const returnValue = store2.doSideEffect();
+
+// 操作可以返回任何值或不返回任何值，并且可以接收任意数量的具有不同类型的参数。参数类型和返回类型不会丢失，这意味着类型检查必须在调用端可用。
+
+// 状态可以通过这个访问和变异。 Getters 可以通过这个访问，但是它们是只读的。
+
+type GetThisWithoutState<Getters, Actions> = {
+  readonly [K in keyof Getters]: Getters[K] extends (
+    ...args: never[]
+  ) => infer R
+    ? R
+    : never;
+} & Actions;
+
+declare function defineStore<
+  State,
+  Getters,
+  Actions,
+  ThisWithoutState = GetThisWithoutState<Getters, Actions>
+>(store: {
+  id: string;
+  state: () => State;
+  getters?: Getters & ThisType<Readonly<State> & ThisWithoutState>;
+  actions?: Actions & ThisType<State & ThisWithoutState>;
+}): Readonly<State> & ThisWithoutState;
