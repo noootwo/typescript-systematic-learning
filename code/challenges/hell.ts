@@ -34,6 +34,8 @@ type GetReadonlyKeys<T> = {
 // 当一个键只有一个值时，该值不能包装成元组类型
 // 如果具有相同键值的值出现多次，则必须将其视为一次, key=value&key=value必须只视为key=value。
 
+type EmptyString2True<S extends string> = S extends '' ? true : S
+
 type NewKeyValue<
   T extends Object,
   NK extends string,
@@ -41,16 +43,22 @@ type NewKeyValue<
 > = NK extends keyof T
   ? V extends T[NK]
     ? T
-    : Copy<T & { [key in NK]: V extends '' ? true : V }>
-  : Copy<T & { [key in NK]: V extends '' ? true : V }>
+    : {
+        [K in keyof T]: K extends NK
+          ? T[K] extends Array<any>
+            ? [...(T[K] & Array<any>), EmptyString2True<V & string>]
+            : [T[K], EmptyString2True<V & string>]
+          : T[K]
+      }
+  : Copy<T & { [key in NK]: EmptyString2True<V & string> }>
 
 type QueryStringParser<
   S extends string,
-  U extends { [key in string]: string | boolean | string[] } = {}
+  U extends object = {}
 > = S extends `${infer K}=${infer L}`
   ? L extends `${infer V}&${infer R}`
-    ? QueryStringParser<R, Copy<U & { [key in K]: V extends '' ? true : V }>>
-    : Copy<U & { [key in K]: L extends '' ? true : L }>
+    ? QueryStringParser<R, NewKeyValue<U, K, V>>
+    : NewKeyValue<U, K, L>
   : U
 
-type test = QueryStringParser<'a=1&b=2&c=3'>
+type test = QueryStringParser<'a=1&b=2&c=3&a=2343'>
