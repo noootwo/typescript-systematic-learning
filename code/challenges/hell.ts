@@ -62,3 +62,59 @@ type QueryStringParser<
   : U
 
 type test = QueryStringParser<'a=1&b=2&c=3&a=2343'>
+
+// -----------------------------------------------------------------------------------
+
+// 在类型系统中实现 JavaScript 的 Array.slice 函数。Slice < Arr，Start，End > 接受树参数。输出应该是从索引 Start 到 End 的 Arr 子数组。负数的索引应该反向计数。
+
+// 例如
+
+type Arr1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+type Result20 = Slice<Arr1, 0, -4> // expected to be [3, 4]
+
+type g = ParserNumber<-6, Arr1>
+
+type GreaterOrEqual<
+  T extends number,
+  U extends number,
+  E extends boolean = true,
+  I extends Array<any> = [[], []]
+> = I[0]['length'] extends T
+  ? I[1]['length'] extends U
+    ? E
+    : false
+  : I[1]['length'] extends U
+  ? true
+  : GreaterOrEqual<T, U, E, [[...I[0], 0], [...I[1], 0]]>
+
+type ParserNumber<
+  T extends number,
+  U extends Array<any>,
+  R extends Array<any> = []
+> = `${T}` extends `-${infer N}`
+  ? `${R['length']}` extends N
+    ? U['length']
+    : ParserNumber<T, Pop<U>, [...R, 0]>
+  : T
+
+type SliceArray<
+  T extends Array<number>,
+  S extends number = 0,
+  E extends number = T['length'],
+  I extends Array<any> = [],
+  R extends Array<any> = []
+> = GreaterOrEqual<I['length'], S, true> extends true
+  ? GreaterOrEqual<E, I['length'], false> extends true
+    ? T extends [infer L, ...infer H]
+      ? SliceArray<H extends Array<number> ? H : [], S, E, [...I, L], [...R, L]>
+      : R
+    : R
+  : T extends [infer L, ...infer H]
+  ? SliceArray<H extends Array<number> ? H : [], S, E, [...I, L], [...R]>
+  : R
+
+type Slice<
+  T extends Array<number>,
+  S extends number = 0,
+  E extends number = T['length']
+> = SliceArray<T, ParserNumber<S, T>, ParserNumber<E, T>>
