@@ -118,3 +118,12 @@ type Slice<
   S extends number = 0,
   E extends number = T['length']
 > = SliceArray<T, ParserNumber<S, T>, ParserNumber<E, T>>
+
+// -----------------------------------------------------------------------------------
+
+// 实现一个类型级别的整数比较器。我们提供了一个枚举来指示比较结果，如下所示:
+
+// 如果 比... 更大 ，类型应是Comparison.Greater.
+// 如果 及 是相等的，类型应该是Comparison.Equal.
+// 如果 低于 ，类型应是Comparison.Lower.
+// 请注意，a 和 b 可以是正整数，也可以是负整数或零，甚至一个是正整数，而另一个是负整数。
